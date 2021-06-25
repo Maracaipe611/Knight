@@ -8,7 +8,7 @@ export default class Tabuleiro extends Component {
     constructor(props) {
         super();
         this.state = ({
-            casaAtual: "D,5",
+            casaAtual: "D,8",
             movimentosPossiveis: [],
             alphabet: ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"],
             movimento: { //Letra, index
@@ -26,6 +26,7 @@ export default class Tabuleiro extends Component {
             statusCavalo: "",
             ordenacaoTroterica: 0,
             semMovimentosPossiveis: false,
+            highScore: 0,
         })
     }
 
@@ -33,7 +34,7 @@ export default class Tabuleiro extends Component {
         return new Promise(resolve => setTimeout(resolve, milliseconds))
     }
 
-    BlackSquare(id, position, knight) {
+    BlackSquare(id, position) {
         return (
             <div
                 className="BlackSquare"
@@ -41,7 +42,11 @@ export default class Tabuleiro extends Component {
                     backgroundColor: '#711a00',
                     width: 50,
                     height: 50,
-                    color: white
+                    color: white,
+                    display: 'inline-grid',
+                    fontSize: '7px',
+                    textAlign: '-webkit-center',
+                    alignItems: 'end'
                 }}
                 id={id + position}>
                 {this.state.casaAtual === (position + "," + id) ? this.knightImage() : null}
@@ -51,7 +56,7 @@ export default class Tabuleiro extends Component {
         )
     }
 
-    WhiteSquare(id, position, knight) {
+    WhiteSquare(id, position) {
         return (
             <div
                 className="WhiteSquare"
@@ -59,7 +64,11 @@ export default class Tabuleiro extends Component {
                     backgroundColor: 'white',
                     width: 50,
                     height: 50,
-                    color: black
+                    color: black,
+                    display: 'inline-grid',
+                    fontSize: '7px',
+                    textAlign: '-webkit-center',
+                    alignItems: 'end'
                 }}
                 id={id + position}>
                 {this.state.casaAtual === (position + "," + id) ? this.knightImage() : null}
@@ -71,7 +80,8 @@ export default class Tabuleiro extends Component {
 
     boardLineWhite(positionVertical) {
         return (
-            <div className="Board">
+            <div className="Board"
+            style={{display: 'grid'}}>
                 {this.WhiteSquare("8", positionVertical, false)}
                 {this.BlackSquare("7", positionVertical, false)}
                 {this.WhiteSquare("6", positionVertical, false)}
@@ -86,7 +96,8 @@ export default class Tabuleiro extends Component {
 
     boardLineBlack(positionVertical) {
         return (
-            <div className="Board">
+            <div className="Board"
+            style={{display: 'grid'}}>
                 {this.BlackSquare("8", positionVertical, false)}
                 {this.WhiteSquare("7", positionVertical, false)}
                 {this.BlackSquare("6", positionVertical, false)}
@@ -101,19 +112,19 @@ export default class Tabuleiro extends Component {
 
     knightImage() {
         return (
-            <img
+            <div><img
                 src={knight}
                 alt={'Cavalo'}
-                style={{ width: '30px', height: '30px', marginTop: '10px' }} />
+                style={{ width: '30px', height: '30px', paddingTop: '10px' }} /></div>
         )
     }
 
     ferraduraImage() {
         return (
-            <img
+            <div><img
                 src={ferradura}
                 alt={'ferradura'}
-                style={{ width: '30px', height: '30px', marginTop: '10px' }} />
+                style={{ width: '30px', height: '30px', paddingTop: '10px' }} /></div>
         )
     }
 
@@ -207,7 +218,7 @@ export default class Tabuleiro extends Component {
         if (!!casaAtual) {
             historicoDeCasas.pop();
             numeracao = numeracao - 1;
-            await this.sleep(150)
+            await this.sleep(50)
             this.setState({
                 historicoDeCasas,
                 casaAtual: ultimaCasaPercorrida,
@@ -222,6 +233,14 @@ export default class Tabuleiro extends Component {
         this.moveHorse(numeracao)
     }
 
+    verificarHighScore(numeracao)
+    {
+        if(numeracao >= this.state.highScore)
+        {
+            return this.setState({highScore: numeracao})
+        }
+    }
+
     async gallop(possibleMoves, housePosition, houseIndex, numeracao) {
         let { casaAtual, alphabet, casaCondenadas, historicoDeCasas } = this.state;
         let casaFutura = [];
@@ -233,7 +252,7 @@ export default class Tabuleiro extends Component {
             a preferencia do movimento, deve ser definido pelo movimento que tem mais chances de ter um movimento futuro.
         Exceto qnd existe apenas um único movimento */
 
-        if (quantidadeDeMovimentos > 1) {
+        if (quantidadeDeMovimentos >= 1) {
             possibleMoves.forEach(element => {
                 let futureHousePositionInNumber = element[0] + housePosition;
                 let futureHouseIndex = element[1] + houseIndex;
@@ -248,7 +267,7 @@ export default class Tabuleiro extends Component {
                 }
             });
             movimentoFuturo = casaFutura[0];
-        }else if(quantidadeDeMovimentos === 0 && numeracao >= 62)
+        }else if(numeracao >= 62)
         {
             return this.setState({
                 semMovimentosPossiveis: true
@@ -261,13 +280,14 @@ export default class Tabuleiro extends Component {
                 "SaindoDaCasa": casaAtual,
                 "IndoPara": movimentoFuturo.Casa,
                 "Numeracao": numeracao };
-            await this.sleep(150)
-            this.setState({
-                casaAtual: movimentoFuturo.Casa,
-                casaCondenadas: this.state.casaCondenadas.concat([futuraCasaCondenada]),
-                historicoDeCasas: this.state.historicoDeCasas.concat([casaAtual]),
-                ordenacaoTroterica: numeracao,
-            })
+                await this.sleep(50)
+                this.setState({
+                    casaAtual: movimentoFuturo.Casa,
+                    casaCondenadas: this.state.casaCondenadas.concat([futuraCasaCondenada]),
+                    historicoDeCasas: this.state.historicoDeCasas.concat([casaAtual]),
+                    ordenacaoTroterica: numeracao,
+                })
+            this.verificarHighScore(numeracao);
             this.rollScroll(document.getElementById("condenados"));
             return this.moveHorse(numeracao)
         }
@@ -329,7 +349,8 @@ export default class Tabuleiro extends Component {
                     marginRight: 'auto',
                     textAlign: 'center',
                     border: '1px solid black',
-                    display: 'inline-flex'
+                    display: 'inline-flex',
+                    position: 'absolute'
                 }}>
                     {this.boardLineWhite("A")}
                     {this.boardLineBlack("B")}
@@ -343,11 +364,12 @@ export default class Tabuleiro extends Component {
                 <div style={{
                     width: 200,
                     height: 400,
-                    marginLeft: 'auto',
+                    marginLeft: '400px',
                     marginRight: 'auto',
                     textAlign: 'center',
                     border: '1px solid black',
-                    display: 'inline-flex'
+                    display: 'inline-flex',
+                    overflow: 'hidden'
                 }}>
                     <h4 style={{ display: 'contents' }}>Histórico de Movimentos: {this.state.historicoDeCasas?.map(x => { return `${x} ->` })}</h4>
                 </div>
@@ -356,6 +378,10 @@ export default class Tabuleiro extends Component {
                     :
                     null
                 }
+                <div><h4>
+                    Maior sequência: {this.state.highScore}
+                    </h4>
+                </div>
             </div>
         )
     }
