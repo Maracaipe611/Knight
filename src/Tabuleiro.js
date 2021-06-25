@@ -27,6 +27,7 @@ export default class Tabuleiro extends Component {
             ordenacaoTroterica: 0,
             semMovimentosPossiveis: false,
             highScore: 0,
+            pensamento: "",
         })
     }
 
@@ -144,6 +145,7 @@ export default class Tabuleiro extends Component {
 
     isItPossibleToMove(housePosition, houseIndex, movimentosPossiveis) {
         let { movimento } = this.state;
+        
         if (movimento.norteDireita[0] + housePosition <= 7
             && movimento.norteDireita[0] + housePosition >= 0
             && movimento.norteDireita[1] + houseIndex <= 8
@@ -215,14 +217,19 @@ export default class Tabuleiro extends Component {
         let { casaAtual, historicoDeCasas} = this.state;
         let ultimaCasaPercorrida = last(historicoDeCasas);//H7
 
+        this.setState({
+            pensamento: "Retrocedendo..."
+        });
+
         if (!!casaAtual) {
             historicoDeCasas.pop();
             numeracao = numeracao - 1;
-            await this.sleep(50)
+            await this.sleep(200)
             this.setState({
                 historicoDeCasas,
                 casaAtual: ultimaCasaPercorrida,
-                ordenacaoTroterica: numeracao
+                ordenacaoTroterica: numeracao,
+                pensamento: "Retrocedendo..."
             });
         } else {
             return this.setState({
@@ -274,13 +281,16 @@ export default class Tabuleiro extends Component {
             });
         }
         if (!!movimentoFuturo) {
+            this.setState({
+                pensamento: "Avançando..."
+            })
             numeracao = numeracao + 1;
             let futuraCasaCondenada = {
                 "Antepenultima": antepenultima,
                 "SaindoDaCasa": casaAtual,
                 "IndoPara": movimentoFuturo.Casa,
                 "Numeracao": numeracao };
-                await this.sleep(50)
+                await this.sleep(200)
                 this.setState({
                     casaAtual: movimentoFuturo.Casa,
                     casaCondenadas: this.state.casaCondenadas.concat([futuraCasaCondenada]),
@@ -289,6 +299,7 @@ export default class Tabuleiro extends Component {
                 })
             this.verificarHighScore(numeracao);
             this.rollScroll(document.getElementById("condenados"));
+            this.rollScroll(document.getElementById("historico"));
             return this.moveHorse(numeracao)
         }
         return this.retroceder(numeracao);
@@ -303,6 +314,9 @@ export default class Tabuleiro extends Component {
         let possibleMoves = [];
 
         housePosition = alphabet.indexOf(housePosition);
+        this.setState({
+            pensamento: "Decidindo melhor rota..."
+        })
         possibleMoves = this.isItPossibleToMove(housePosition, houseIndex, possibleMoves);
         this.gallop(possibleMoves, housePosition, houseIndex, ordenacaoTroterica)
     }
@@ -317,6 +331,12 @@ export default class Tabuleiro extends Component {
         );
     }
 
+    retornarHistorico(historico, i) {
+        return (
+            <h3 style={{ margin: '0 0 0 0' }}>{`${i}º - [${historico}]`}</h3>
+        );
+    }
+
     componentDidMount() {
         this.moveHorse(this.state.ordenacaoTroterica);
     }
@@ -325,6 +345,9 @@ export default class Tabuleiro extends Component {
 
         return (
             <div style={{ width: '100%', height: 400 }}>
+            <h3>
+                {this.state.pensamento}
+            </h3>
                 <div id='condenados' style={{
                     width: 210,
                     height: 400,
@@ -335,7 +358,12 @@ export default class Tabuleiro extends Component {
                     display: 'inline-grid',
                     textOverflow: 'ellipsis', overflow: 'auto', whiteSpace: 'nowrap'
                 }}>
-                    <h4 style={{ display: 'contents' }}>Movimentos condenados</h4>
+                    <h4 style={{
+                        position: 'absolute',
+                        backgroundColor: 'white',
+                        margin: '0 0 0 5px',
+                        padding: '10px 0 0 0',
+                    }}>Movimentos condenados</h4>
                     <div>
                         {this.state.casaCondenadas?.map(x => {
                             return this.retornarCondenadas(x.SaindoDaCasa, x.IndoPara, x.Numeracao)
@@ -361,18 +389,27 @@ export default class Tabuleiro extends Component {
                     {this.boardLineWhite("G")}
                     {this.boardLineBlack("H")}
                 </div>
-                <div style={{
-                    width: 200,
+                <div id='historico' style={{
+                    width: 210,
                     height: 400,
                     marginLeft: '400px',
                     marginRight: 'auto',
                     textAlign: 'center',
                     border: '1px solid black',
-                    display: 'inline-flex',
-                    overflow: 'hidden'
+                    display: 'inline-grid',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis', overflow: 'auto',
                 }}>
-                    <h4 style={{ display: 'contents' }}>Histórico de Movimentos: {this.state.historicoDeCasas?.map(x => { return `${x} ->` })}</h4>
+                    <h4 style={{
+                        position: 'absolute',
+                        backgroundColor: 'white',
+                        margin: '0 0 0 4px',
+                        padding: '10px 0 0 0',
+                    }}>Histórico de Movimentos</h4>
+                <div>
+                    {this.state.historicoDeCasas?.map((x, i) => { return this.retornarHistorico(x, i) })}
                 </div>
+            </div>
                 {this.state.semMovimentosPossiveis ?
                     <div><h1>Não existem mais movimentos possíveis!</h1></div>
                     :
